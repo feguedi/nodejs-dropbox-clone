@@ -1,12 +1,12 @@
-## Nodejs Dropbox clone
+# Nodejs Dropbox clone
 
 This is a basic Dropbox clone to sync files across multiple remote folders.
 
 Time spent: 15 hour
 
-### Features
+## Features
 
-#### Required
+### Required
 
 - [x] Walkthrough Gif embedded in README
 - [x] README `Time spent:` includes the number of hours spent on the assignment
@@ -20,7 +20,7 @@ Time spent: 15 hour
 - [ ] Server will sync `HTTP` modifications over TCP to the Client
 - [ ] Server will sync watched file modifications (e.g., `fs.watch`) over TCP to the Client
 
-### Optional
+## Optional
 
 - [ ] Client supports multiple connected clients
 - [ ] Client does not need to make additional `GET` request on `"write"` update
@@ -31,12 +31,8 @@ Time spent: 15 hour
 - [ ] Client can create a directory with an archive
 - [ ] User can connect to the server using an FTP client
 
-
-### Walkthrough
+## Walkthrough
 
 `<Add your Walkthrough Gif here (by updating the image URL)>`
 
 ![Video Walkthrough](...)
-
-
-

@@ -3,26 +3,26 @@
  * - Nssocket TCP client listener
  * npm run client
  */
-let fs = require("fs");
-let path = require("path");
-let mkdirp = require("mkdirp");
-let rimraf = require("rimraf");
-let Promise = require("songbird");
-let nssocket = require("nssocket");
-let argv = require("yargs").argv;
+let fs = require('fs');
+let path = require('path');
+let mkdirp = require('mkdirp');
+let rimraf = require('rimraf');
+let Promise = require('songbird');
+let nssocket = require('nssocket');
+let argv = require('yargs').argv;
 
-let logger = require("./utils/logger");
-let Constant = require("./constant");
+let logger = require('./utils/logger');
+let Constant = require('./constant');
 
-const ROOT_DIR = argv.dir ? argv.dir : path.join(process.cwd(), "/client");
+const ROOT_DIR = argv.dir ? argv.dir : path.join(process.cwd(), '/client');
 
 //let TCPclient = new nssocket.NsSocket({ reconnect: true });
 let TCPclient = new nssocket.NsSocket();
 
 // TCP server message listener
 // PUT: create
-TCPclient.data(["io", Constant.PUT], (data) => {
-  logger.debug("PUT", data);
+TCPclient.data(['io', Constant.PUT], (data) => {
+  logger.debug('PUT', data);
 
   let filePath = path.resolve(path.join(ROOT_DIR, data.filePath));
 
@@ -38,8 +38,8 @@ TCPclient.data(["io", Constant.PUT], (data) => {
 });
 
 // DELETE: remove
-TCPclient.data(["io", Constant.DELETE], (data) => {
-  logger.debug("DELETE", data);
+TCPclient.data(['io', Constant.DELETE], (data) => {
+  logger.debug('DELETE', data);
 
   let filePath = path.resolve(path.join(ROOT_DIR, data.filePath));
 
@@ -55,8 +55,8 @@ TCPclient.data(["io", Constant.DELETE], (data) => {
 });
 
 // POST: update
-TCPclient.data(["io", Constant.POST], (data) => {
-  logger.debug("POST", data);
+TCPclient.data(['io', Constant.POST], (data) => {
+  logger.debug('POST', data);
 
   let filePath = path.resolve(path.join(ROOT_DIR, data.filePath));
   fs.truncate.promise(filePath, 0).then(() => {

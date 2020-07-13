@@ -1,5 +1,6 @@
 /**
  * index.js
  */
-require("./express");
-require("./tcpServer");
+require('dotenv').config({ silent: true })
+require('./express')
+require('./tcpServer')
