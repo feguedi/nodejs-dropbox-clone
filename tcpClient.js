@@ -3,71 +3,80 @@
  * - Nssocket TCP client listener
  * npm run client
  */
-let fs = require('fs');
-let path = require('path');
-let mkdirp = require('mkdirp');
-let rimraf = require('rimraf');
-let Promise = require('songbird');
-let nssocket = require('nssocket');
-let argv = require('yargs').argv;
+const fs = require('fs')
+const path = require('path')
+const mkdirp = require('mkdirp')
+const rimraf = require('rimraf')
+const { NsSocket } = require('nssocket')
+const argv = require('yargs').argv
 
-let logger = require('./utils/logger');
-let Constant = require('./constant');
+const { debug, info } = require('./utils/logger')
 
-const ROOT_DIR = argv.dir ? argv.dir : path.join(process.cwd(), '/client');
+const PUT = process.env.PUT
+const POST = process.env.POST
+const DELETE = process.env.DELETE
+const TCP_PORT = process.env.TCP_PORT
 
-//let TCPclient = new nssocket.NsSocket({ reconnect: true });
-let TCPclient = new nssocket.NsSocket();
+const ROOT_DIR = argv.dir ? argv.dir : path.join(process.cwd(), '/client')
+
+//let TCPclient = new nssocket.NsSocket({ reconnect: true })
+const TCPclient = new NsSocket()
 
 // TCP server message listener
 // PUT: create
-TCPclient.data(['io', Constant.PUT], (data) => {
-  logger.debug('PUT', data);
+TCPclient.data(['io', PUT], data => {
+  debug('PUT', data)
 
-  let filePath = path.resolve(path.join(ROOT_DIR, data.filePath));
+  const filePath = path.resolve(path.join(ROOT_DIR, data.filePath))
 
   if (data.isPathDir) { //if folder
     mkdirp.promise(filePath).then(() => {
-      logger.info(`PUT: Folder created ${filePath}`);
-    });
+      info(`PUT: Folder created ${filePath}`)
+    })
   } else { // file
-    fs.writeFile.promise(filePath, data.bodyText).then(() => {
-      logger.info(`PUT: File created ${filePath} content is ${data.bodyText}`);
-    });
+    try {
+      const wf = fs.writeFileSync(filePath, data.bodyText)
+      info(`PUT: File created ${filePath} content is ${data.bodyText}\n${wf}`)
+    } catch (error) {
+      
+    }
   }
-});
+})
 
 // DELETE: remove
-TCPclient.data(['io', Constant.DELETE], (data) => {
-  logger.debug('DELETE', data);
+TCPclient.data(['io', DELETE], (data) => {
+  debug('DELETE', data)
 
-  let filePath = path.resolve(path.join(ROOT_DIR, data.filePath));
+  let filePath = path.resolve(path.join(ROOT_DIR, data.filePath))
 
   if (data.isPathDir) { //dir
     rimraf.promise(filePath).then(() => {
-      logger.info(`DELETE: Folder deleted ${filePath}`);
-    });
+      info(`DELETE: Folder deleted ${filePath}`)
+    })
   } else { //file
-    fs.unlink.promise(filePath).then(() => {
-      logger.info(`DELETE: File deleted ${filePath}`);
-    });
+    try {
+      const unlink = fs.unlinkSync(filePath)
+      info(`DELETE: File deleted ${filePath}`)
+    } catch (error) {
+      
+    }
   }
-});
+})
 
 // POST: update
-TCPclient.data(['io', Constant.POST], (data) => {
-  logger.debug('POST', data);
+TCPclient.data(['io', POST], (data) => {
+  debug('POST', data)
 
-  let filePath = path.resolve(path.join(ROOT_DIR, data.filePath));
+  let filePath = path.resolve(path.join(ROOT_DIR, data.filePath))
   fs.truncate.promise(filePath, 0).then(() => {
     fs.writeFile.promise(filePath, data.bodyText).then(() => {
-      logger.info(`POST: File updated ${filePath} content is ${data.bodyText}`);
-    });
-  });
-});
+      info(`POST: File updated ${filePath} content is ${data.bodyText}`)
+    })
+  })
+})
 
-TCPclient.connect(Constant.TCP_PORT);
-logger.info(`TCPclient connected to TCPserver:${Constant.TCP_PORT}`);
-logger.info(`Client ROOT_DIR is ${ROOT_DIR}`);
+TCPclient.connect(TCP_PORT)
+info(`TCPclient connected to TCPserver:${TCP_PORT}`)
+info(`Client ROOT_DIR is ${ROOT_DIR}`)
 
-module.exports = TCPclient;
+module.exports = TCPclient

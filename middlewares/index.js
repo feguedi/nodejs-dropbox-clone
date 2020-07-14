@@ -4,15 +4,19 @@ const _ = require('lodash')
 const fileUtil = require('../utils/fileUtil')
 const logger = require('../utils/logger')
 const mime = require('mime-types')
+const { promisify } = require('util')
+
+const DROPBOX_DIR = process.env.DROPBOX_DIR || path.resolve(process.cwd())
+const statAsync = promisify(fs.stat)
 
 /**
  * setFileStat
  * - set req.stat = fs.stat(req.filePath)
  */
-const setFileStat = async(req, res, next) => {
+const setFileStat = async (req, res, next) => {
     req.filePath = path.resolve(path.join(DROPBOX_DIR, req.url))
     try {
-        const stat = await fs.stat(req.filePath)
+        const stat = await statAsync(req.filePath)
         req.stat = stat
     } catch (error) {
         req.stat = null
@@ -42,12 +46,12 @@ function setDirInfo(req, res, next) {
  * - set req.stat {} as shared
  * -
  */
-function setHeader(req, res, next) {
+const setHeader = async (req, res, next) => {
     if (!req.stat) {
         return next()
     }
 
-    if (req.stat.isDirectory()) {
+    if (req.stat.isDirectory) {
         // if dir && x-gtar
         if (req.header('Accept') === 'application/x-gtar') {
             logger.info('GET: directory zip')
@@ -58,14 +62,17 @@ function setHeader(req, res, next) {
         } else { // if dir: list file in dir
             logger.info('GET: directory list')
 
-            fileUtil.readdirRecursive(req.filePath).then((fileList) => {
-                fileList = _.map(fileList, (file) => {
-                    return file.replace(DROPBOX_DIR, '') //to relative path
-                })
-                res.body = fileList
-                res.setHeader('Content-Length', res.body.length)
-                res.setHeader('Content-Type', 'application/json')
-            }).then(next)
+            let fileList = await fileUtil.readdirRecursive(req.filePath)
+            fileList = _.map(fileList, file => {
+                console.log(file)
+                const filename = file.replace(DROPBOX_DIR, '')  //to relative path
+                logger.debug(`MIDDLEWARE.SetHeader: ${ filename }`)
+                return filename
+            })
+            res.body = fileList
+            res.setHeader('Content-Length', res.body.length)
+            res.setHeader('Content-Type', 'application/json')
+            next()
         }
     } else { // if file
         logger.info('GET: file')
@@ -73,7 +80,7 @@ function setHeader(req, res, next) {
         let contentType = mime.contentType((path.extname(req.filePath)))
         res.setHeader('Content-Type', contentType)
             //res.download(req.filePath) //download file w express helper
-        let fileStream = fs.createReadStream(req.filePath)
+        const fileStream = fs.createReadStream(req.filePath)
         fileStream.on('error', (err) => {
             res.error = err
             logger.error(err)

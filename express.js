@@ -9,13 +9,7 @@
 // ----------------------------------------------------------------------------
 // Express Server
 // ----------------------------------------------------------------------------
-const { argv } = require('yargs')
-const fs = require('fs')
 const path = require('path')
-const _ = require('lodash')
-const mkdirp = require('mkdirp')
-
-const Promise = require('songbird')
 const express = require('express')
 const morgan = require('morgan')
 const bodyParser = require('body-parser')
@@ -23,17 +17,14 @@ const cookieParser = require('cookie-parser')
 const methodOverride = require('method-override')
 const favicon = require('serve-favicon')
 const compression = require('compression')
-
 const logger = require('./utils/logger')
-const Constant = require('./constant')
-require('./tcpServer')
 
 const HOST = process.env.HOST || '127.0.0.1'
 const HTTP_PORT = process.env.PORT || '3000'
-const DROPBOX_DIR = argv.dir ? argv.dir : path.resolve(process.cwd()) //fallback to current path
+const DROPBOX_DIR = process.env.DROPBOX_DIR || path.resolve(process.cwd()) //fallback to current path
 
 // Express setup middleware
-let app = express()
+const app = express()
 app.use(favicon(__dirname + '/public/favicon.ico'))
 app.use(express.static('public', { maxage: '24h' })) // static assets, set Etag, maxage
 app.use(bodyParser.json()) // for parsing application/json

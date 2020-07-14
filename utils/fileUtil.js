@@ -6,9 +6,12 @@
  */
 const fs = require('fs')
 const path = require('path')
-const Promise = require('songbird')
 const _ = require('lodash')
 const logger = require('./logger')
+const { promisify } = require('util')
+
+const readdirAsync = promisify(fs.readdir)
+const statAsync = promisify(fs.stat)
 
 /**
  * readdirRecursive("path/to/fileordir").then()
@@ -16,26 +19,32 @@ const logger = require('./logger')
  * - e.g. /Users/ycao2/walmart/github/nodejs-dropbox-clone/dropbox
  */
 exports.readdirRecursive = async dirName => {
-    if (!dirName) { throw new Error('dirname is required') }
+    if (!dirName) {
+        throw new Error('dirname is required')
+    }
 
     try {
-        const files = await fs.readdir(dirName) //shallow readdir of path
-        return files.map(async fileName => { //bluebird .map(item) return [], item is resolved value of promise
-                fileName = path.join(dirName, fileName) // ensure absolute path
-                    // return fs.stat.promise(fileName).then((stat) => {
-                    //     return stat.isFile() ? fileName : FileUtil.readdirRecursive(fileName)
-                    // })
-                const stat = await fs.stat(fileName)
-                return stat.isFile() ? fileName : this.readdirRecursive(fileName)
-            })
-            .reduce((a, b) => {
-                return a.concat(b)
-            }, []) // flatten array, init value []
+        let files = await readdirAsync(dirName) //shallow readdir of path
+        let arr = files.map(async fileName => { //bluebird .map(item) return [], item is resolved value of promise
+            fileName = path.join(dirName, fileName) // ensure absolute path
+            // return fs.stat.promise(fileName).then((stat) => {
+            //     return stat.isFile() ? fileName : FileUtil.readdirRecursive(fileName)
+            // })
+            const stat = await statAsync(fileName)
+            return stat.isFile() ? fileName : this.readdirRecursive(fileName)
+        })
+        arr = arr.reduce((a, b) => {
+            return a.concat(b)
+        }, []) // flatten array, init value []
+        return arr
     } catch (err) {
         //handle dirName is file case
-        return fs.stat.promise(dirName).then((stat) => {
-            if (stat.isFile()) { return dirName }
-        })
+        const stat = await statAsync(dirName)
+        if (stat.isFile()) {
+            return dirName
+        }
+
+        return stat
     }
 }
 

@@ -8,7 +8,7 @@ const path = require('path')
 
 const PATH_LOG = '../logs/logs.log'
 
-exports.logger = winston.createLogger({
+const logger = winston.createLogger({
     // file log: info, error
     transports: [
         new winston.transports.File({
@@ -31,3 +31,5 @@ exports.logger = winston.createLogger({
     ],
     exitOnError: false
 })
+
+module.exports = logger
