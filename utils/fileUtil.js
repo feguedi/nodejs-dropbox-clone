@@ -64,7 +64,7 @@ exports.isPathDir = filePath => {
     return false
 }
 
-exports.recursiveDir = (dir, arr) => {
+exports.recursiveDir = dir => {
     if (!dir) {
         throw new Error('dirname is required')
     }
@@ -72,32 +72,15 @@ exports.recursiveDir = (dir, arr) => {
     console.log('dir:', dir)
     try {
         let files = fs.readdirSync(dir)
-        // arr = arr || []
         files = files.map(filename => {
             filename = path.join(dir, filename)
 
             const stats = fs.statSync(filename)
             return stats.isFile() ? filename : this.recursiveDir(filename, arr)
         })
-        // return files
-
         files = files.reduce((a, b) => a.concat(b), [])
+
         return files
-        // files.forEach(file => {
-        //     if (fs.statSync(dir + '/' + file).isDirectory()) {
-        //         console.log(`\t${ file } es una carpeta`)
-        //         try {
-        //             arr = this.recursiveDir(dir + '/' + file, arr)
-        //         } catch (err) {
-        //             logger.error(err)
-        //         }
-        //     } else {
-        //         console.log(`\t${ file } es un archivo`)
-        //         arr.push(fs.statSync(dir + '/' + file))
-        //     }
-        // })
-        // console.log(`Arreglo de archivos: ${ JSON.stringify(arr) }`)
-        // return arr
     } catch (error) {
         logger.error(error)
         const stat = fs.statSync(dir)

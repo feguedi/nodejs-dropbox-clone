@@ -4,8 +4,8 @@
     "description": "code path pre-work",
     "main": "index.js",
     "scripts": {
-        "start": "babel-node --stage 1 -- express.js",
-        "client": "babel-node --stage 1 -- tcpCLient.js",
+        "start": "node express.js",
+        "client": "node tcpClient.js",
         "dev": "nodemon index.js -e js",
         "lint:tcpclient": "eslint tcpClient.js",
         "lint:express": "eslint express.js",
