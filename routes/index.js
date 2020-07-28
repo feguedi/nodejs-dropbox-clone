@@ -9,6 +9,7 @@ const rimraf = require('rimraf')
 const archiver = require('archiver')
 const Eventbus = require('../utils/eventBus')
 const fs = require('fs')
+const path = require('path')
 const { promisify } = require('util')
 const logger = require('../utils/logger')
 
@@ -19,6 +20,7 @@ const truncateAsync = promisify(fs.truncate)
 const PUT = process.env.PUT
 const POST = process.env.POST
 const DELETE = process.env.DELETE
+const DROPBOX_DIR = process.env.DROPBOX_DIR || path.join(__dirname, '../dropbox')
 
 /**
  * @GET
@@ -28,8 +30,13 @@ const DELETE = process.env.DELETE
  curl -v -H "Accept:application/x-gtar" http://127.0.0.1:3000/dropbox -X GET //for download archive of dir
  */
 app.get('*', [setFileStat, setHeader], (req, res) => {
-    if (res.err) {
+    if (req.error) {
         return res.status(500).send('Something broke!')
+    }
+
+    if (!req.stat) {
+        const fn = req.url.replace(DROPBOX_DIR, '')
+        return res.status(404).send(`No existe ${ fn }`)
     }
 
     if (req.stat.isDirectory() && req.header('Accept') === 'application/x-gtar') {

@@ -21,7 +21,7 @@ const logger = require('./utils/logger')
 
 const HOST = process.env.HOST || '127.0.0.1'
 const HTTP_PORT = process.env.PORT || '3000'
-const DROPBOX_DIR = process.env.DROPBOX_DIR || path.resolve(process.cwd()) //fallback to current path
+const DROPBOX_DIR = process.env.DROPBOX_DIR || path.join(__dirname, '/dropbox') //fallback to current path
 
 // Express setup middleware
 const app = express()

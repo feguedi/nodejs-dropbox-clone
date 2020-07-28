@@ -6,7 +6,7 @@ const logger = require('../utils/logger')
 const mime = require('mime-types')
 const { promisify } = require('util')
 
-const DROPBOX_DIR = process.env.DROPBOX_DIR || path.resolve(process.cwd())
+const DROPBOX_DIR = process.env.DROPBOX_DIR || path.join(__dirname, '../dropbox')
 const statAsync = promisify(fs.stat)
 
 /**
@@ -19,6 +19,7 @@ const setFileStat = async (req, res, next) => {
         const stat = await statAsync(req.filePath)
         req.stat = stat
     } catch (error) {
+        logger.error(error)
         req.stat = null
     }
     next()
@@ -28,7 +29,7 @@ const setFileStat = async (req, res, next) => {
  * setDirInfo
  * - set req.isPathDir, req.dirPath, req.bodyText
  */
-function setDirInfo(req, res, next) {
+const setDirInfo = (req, res, next) => {
     if (req.body) {
         req.bodyText = Object.keys(req.body)[0] || ''
     }
@@ -46,12 +47,12 @@ function setDirInfo(req, res, next) {
  * - set req.stat {} as shared
  * -
  */
-const setHeader = async (req, res, next) => {
+const setHeader = (req, res, next) => {
     if (!req.stat) {
         return next()
     }
 
-    if (req.stat.isDirectory) {
+    if (req.stat.isDirectory()) {
         // if dir && x-gtar
         if (req.header('Accept') === 'application/x-gtar') {
             logger.info('GET: directory zip')
@@ -60,16 +61,17 @@ const setHeader = async (req, res, next) => {
             res.attachment('archive.zip')
             next()
         } else { // if dir: list file in dir
-            logger.info('GET: directory list')
-
-            let fileList = await fileUtil.readdirRecursive(req.filePath)
-            fileList = _.map(fileList, file => {
-                console.log(file)
-                const filename = file.replace(DROPBOX_DIR, '')  //to relative path
-                logger.debug(`MIDDLEWARE.SetHeader: ${ filename }`)
-                return filename
+            const fileList = fileUtil.recursiveDir(req.filePath)
+            const filesArr = _.map(fileList, file => {
+                try {
+                    const filename = file.replace(DROPBOX_DIR, '')  //to relative path
+                    logger.debug(`MIDDLEWARE.SetHeader: ${ filename }`)
+                    return filename
+                } catch (error) {
+                    logger.error('El chingado error de file.replace', error)
+                }
             })
-            res.body = fileList
+            res.body = filesArr
             res.setHeader('Content-Length', res.body.length)
             res.setHeader('Content-Type', 'application/json')
             next()
@@ -82,7 +84,7 @@ const setHeader = async (req, res, next) => {
             //res.download(req.filePath) //download file w express helper
         const fileStream = fs.createReadStream(req.filePath)
         fileStream.on('error', (err) => {
-            res.error = err
+            req.error = err
             logger.error(err)
             next()
         })
